@@ -1,0 +1,30 @@
+# Maintainer: Gauthier Voron <gauthier.voron@mnesic.fr>
+pkgname='config-multimedia'
+pkgver=1.0
+pkgrel=1
+pkgdesc="Configuration for multimedia environment"
+arch=('any')
+url=""
+license=('GPL')
+groups=('config-laurier')
+depends=('aspell' 'aspell-fr' 'audacity' 'eog' 'evince' 'ffmpeg' 'firefox' 'flashplugin' 'ghostscript' 'gimp' 'graphviz' 'imagemagick' 'libreoffice-fresh' 'scrot' 'thunderbird' 'vlc' 'xournal' 'youtube-dl')
+makedepends=()
+checkdepends=()
+optdepends=()
+provides=()
+conflicts=()
+replaces=()
+backup=()
+options=()
+install=
+changelog=
+source=()
+noextract=()
+md5sums=()
+validpgpkeys=()
+
+# prepare() {
+# }
+
+# package() {
+# }

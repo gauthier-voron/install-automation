@@ -1,0 +1,13 @@
+## sudoers additional file
+##
+## Allow users in sudo group to perform usual system management tasks without
+## the need to enter the password each time.
+##
+
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/halt
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/poweroff
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/reboot
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/suspend
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/hybrid-sleep
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/hibernate
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/netctl

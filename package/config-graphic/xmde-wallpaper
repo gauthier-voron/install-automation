@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+#   Set the wallpaper for XMonad Desktop Environment.
+#   Look at possible locations to find wallpaper files either in user specific
+#   directories or system wide default, and then call xmde-wallpaper on it
+#
+
+for wpdir in "$HOME/.config/wallpaper" \
+		 "$HOME/resource/picture/wallpaper" \
+		 "$HOME/resource/wallpaper" \
+		 "$HOME/.wallpaper" \
+		 '/usr/share/wallpaper'
+do
+
+    # Stop at the first directory found.
+    # This file can be overriden by a user specific script (see /etc/xmde/rc).
+    #
+    if [ -d "$wpdir" ] ; then
+	xmde-wallpaper "$wpdir"
+    fi
+
+done

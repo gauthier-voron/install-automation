@@ -1,0 +1,32 @@
+# Maintainer: Gauthier Voron <gauthier.voron@mnesic.fr>
+pkgname='setup-qemu'
+pkgver=1.0
+pkgrel=1
+pkgdesc="Additional configuration specific to Virtual Machine"
+arch=('any')
+url=""
+license=('GPL')
+groups=('config-qemu')
+depends=()
+makedepends=()
+checkdepends=()
+optdepends=()
+provides=()
+conflicts=()
+replaces=()
+backup=()
+options=()
+install=
+changelog=
+source=()
+noextract=()
+md5sums=()
+validpgpkeys=()
+
+# prepare() {
+# }
+
+package() {
+    install -o 0 -g 0 -d -m755 "$pkgdir/etc"
+    echo 'Qemu' > "$pkgdir/etc/hostname"
+}

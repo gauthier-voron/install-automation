@@ -1,0 +1,37 @@
+#!/usr/bin/bash
+
+
+set -e
+
+
+source 'script/common/ui'
+source 'script/qemu/partition'
+source 'script/qemu/basesys'
+
+
+disk='/dev/vda'
+msg "No system password for virtual machines"
+
+msg "Prepare partitions"
+prepare_partitions "$disk" swap root
+
+msg "Format partitions"
+format_partitions "$swap" "$root"
+
+msg "Check partitions"
+check_partitions
+
+msg "Pacstrap base system"
+pacstrap_base_system
+
+msg "Setup system boot"
+setup_system_boot "$disk"
+
+msg "Setup system network"
+setup_system_network
+
+msg "Setup system auto-install"
+setup_system_autoinstall
+
+
+poweroff

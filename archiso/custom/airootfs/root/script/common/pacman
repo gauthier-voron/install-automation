@@ -1,0 +1,79 @@
+#!/usr/bin/bash
+
+
+source 'script/common/chroot'
+
+
+list_system_packages() {
+    add_chroot_commands "pacman -Qe > /root/packages.txt"
+    execute_chroot_command
+    cut -d' ' -f1 '/mnt/root/packages.txt'
+    rm '/mnt/root/packages.txt'
+}
+
+pkgbuild_with_deps() {
+    local pkgname="$1" ; shift
+    local depname sep
+
+    (
+	printf "# Maintainer: Autoinstall <nobody@nowhere.net>\n"
+	printf "pkgname='%s'\n" "$pkgname"
+	printf "pkgver=%s\n" "$(date '+%Y.%m.%d.%H.%M.%S')"
+	printf "pkgrel=1\n"
+	printf 'pkgdesc="Generated dependency package"\n'
+	printf "arch=('any')\n"
+	printf "license=('GPL')\n"
+
+	sep=''
+	printf "depends=("
+	for pkg in "$@" ; do
+	    printf "%s'%s'" "$sep" "$pkg"
+	    sep=' '
+	done
+	printf ")\n"
+    )
+}
+
+makepkg_with_deps() {
+    local pkgname="$1" ; shift
+    local tmpdir=$(mktemp -d -p '/tmp' 'XXXXXXXXXX')
+    local user="installer-$pkgname"
+    local path="$PWD/$pkgname.tar.xz"
+
+    (
+	cd "$tmpdir"
+	pacman -Sy --noconfirm binutils fakeroot
+	pkgbuild_with_deps "$pkgname" "$@" > 'PKGBUILD'
+
+	useradd --gid users --no-user-group --shell '/usr/bin/zsh' "$user"
+	chown -R "$user":'users' '.'
+	su "$user" -c "makepkg --nodeps"
+
+	mv "$pkgname"*'.tar.xz' "$path"
+    ) >&2
+
+    rm -rf "$tmpdir"
+    userdel "$user"
+
+    echo "$path"
+}
+
+bind_system_packages() {
+    local pkglpath='/tmp/system-packages.txt'
+    local instpath='/root/config-base.tar.xz'
+    local pkgpath pkg
+
+    list_system_packages > "$pkglpath"
+
+    pkgpath=$(makepkg_with_deps 'config-base' $(cat "$pkglpath"))
+    mv "$pkgpath" "/mnt/$instpath"
+
+    add_chroot_commands "pacman -U --noconfirm '$instpath'"
+    add_chroot_commands "rm '$instpath'"
+    for pkg in $(cat "$pkglpath") ; do
+	add_chroot_commands "pacman -D --asdep '$pkg'"
+    done
+
+    execute_chroot_command
+    rm "$pkglpath"
+}

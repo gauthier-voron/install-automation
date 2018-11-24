@@ -1,0 +1,40 @@
+# Maintainer: Gauthier Voron <gauthier.voron@mnesic.fr>
+pkgname='setup-laurier'
+pkgver=1.0
+pkgrel=1
+pkgdesc="Additional configuration specific to Laurier"
+arch=('any')
+url=""
+license=('GPL')
+groups=('config-laurier')
+depends=('terminus-font')
+makedepends=()
+checkdepends=()
+optdepends=()
+provides=()
+conflicts=()
+replaces=()
+backup=()
+options=()
+install=
+changelog=
+source=('screen.conf' 'xmde-screen-resolution')
+noextract=()
+md5sums=('SKIP' 'SKIP')
+validpgpkeys=()
+
+# prepare() {
+# }
+
+package() {
+    install -o 0 -g 0 -d -m755 "$pkgdir/etc"
+    echo 'FONT=ter-132n' > "$pkgdir/etc/vconsole.conf"
+    echo 'Laurier' > "$pkgdir/etc/hostname"
+
+    install -o 0 -g 0 -d -m755 "$pkgdir/etc/xmde"
+    install -m644 "$srcdir/screen.conf" "$pkgdir/etc/xmde/screen.conf"
+
+    install -o 0 -g 0 -d -m755 "$pkgdir/etc/xmde/xinitrc.d"
+    install -m755 "$srcdir/xmde-screen-resolution" \
+	    "$pkgdir/etc/xmde/xinitrc.d/50-screen-resolution.sh"
+}

@@ -1,0 +1,38 @@
+# Maintainer: Gauthier Voron <gauthier.voron@mnesic.fr>
+pkgname='homectl'
+pkgver=1.0
+pkgrel=1
+pkgdesc="Efficient organization of home directory"
+arch=('any')
+url=""
+license=('GPL')
+groups=()
+depends=()
+makedepends=()
+checkdepends=()
+optdepends=()
+provides=()
+conflicts=()
+replaces=()
+backup=()
+options=()
+install=
+changelog=
+source=()
+noextract=()
+md5sums=()
+validpgpkeys=()
+
+package() {
+    install -d -m755 "$pkgdir/etc/skel"
+
+    for dir in 'archive' 'download' 'model' 'project' \
+	       'resource' 'task' 'volatie'
+    do
+	install -d -m755 "$pkgdir/etc/skel/$dir"
+    done
+
+    for res in 'music' 'picture' 'video' ; do
+	install -d -m755 "$pkgdir/etc/skel/resource/$res"
+    done
+}

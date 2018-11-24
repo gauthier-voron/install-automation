@@ -1,0 +1,60 @@
+#!/usr/bin/bash
+
+
+set -e
+
+
+source 'script/common/network'
+source 'script/common/ui'
+source 'script/qemu/basesys'
+
+
+create_pacman_conf() {
+    cp '/etc/pacman.conf' '/tmp/pacman.conf'
+
+    {
+	printf '[custom]\n'
+	printf 'SigLevel = Optional TrustAll\n'
+	printf 'Server = file://%s\n' "$PWD/pkg"
+    } >> '/tmp/pacman.conf'
+
+    sed -ri 's/^#Color/Color/' '/tmp/pacman.conf'
+
+    echo '/tmp/pacman.conf'
+}
+
+setup_users() {
+    useradd --gid users --groups sudo --create-home --no-user-group \
+	    --shell '/usr/bin/zsh' 'gauthier'
+
+    passwd -d 'gauthier'
+    passwd -l 'root'
+}
+
+
+msg "Create custom pacman configuration"
+pconf="`create_pacman_conf`"
+
+msg "Check network availability"
+if ! wait_network 10 ; then
+    error "Cannot setup network connection"
+fi
+
+msg "Install full system"
+pacman -Sy --config "$pconf" --noconfirm config-qemu
+
+msg "Setup groups and users"
+setup_users
+
+msg "Finish installation"
+remove_system_autoinstall
+
+msg "Setup autologin"
+systemctl disable getty@tty1
+systemctl enable autologin@gauthier
+
+msg "Run file indexing"
+updatedb
+
+msg "Reboot system"
+reboot

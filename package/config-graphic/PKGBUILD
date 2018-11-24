@@ -1,0 +1,45 @@
+# Maintainer: Gauthier Voron <gauthier.voron@mnesic.fr>
+pkgname='config-graphic'
+pkgver=1.0
+pkgrel=1
+pkgdesc="Graphical configuration for desktop environment"
+arch=('any')
+url=""
+license=('GPL')
+groups=('config-laurier' 'config-qemu')
+depends=('xmde')
+makedepends=()
+checkdepends=()
+optdepends=()
+provides=()
+conflicts=()
+replaces=()
+backup=()
+options=()
+install=
+changelog=
+source=('archlinux-wallpaper-1366x768.png' 'archlinux-wallpaper-1920x1080.png'
+	'archlinux-wallpaper-1920x1200.png' 'xmde-wallpaper' 'zprofile')
+noextract=()
+md5sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+validpgpkeys=()
+
+# prepare() {
+# }
+
+package() {
+    install -d -m755 "$pkgdir/etc/skel"
+    install -m644 "$srcdir/zprofile" "$pkgdir/etc/skel/.zprofile"
+
+    install -o 0 -g 0 -d -m755 "$pkgdir/usr/share/wallpaper"
+    for wallpaper in 'archlinux-wallpaper-1366x768.png' \
+			 'archlinux-wallpaper-1920x1080.png' \
+			 'archlinux-wallpaper-1920x1200.png' ; do
+	install -m644 "$srcdir/$wallpaper" \
+		"$pkgdir/usr/share/wallpaper/$wallpaper"
+    done
+
+    install -o 0 -g 0 -d -m755 "$pkgdir/etc/xmde/xinitrc.d"
+    install -m755 "$srcdir/xmde-wallpaper" \
+	    "$pkgdir/etc/xmde/xinitrc.d/90-wallpaper.sh"
+}

@@ -1,0 +1,9 @@
+## sudoers additional file
+##
+## Allow 'root' user and users part of the 'sudo' group to perform privileged
+## commands with sudo with password required.
+##
+
+root ALL=(ALL) ALL
+
+%sudo ALL=(ALL) ALL

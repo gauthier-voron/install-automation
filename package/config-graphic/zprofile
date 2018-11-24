@@ -1,0 +1,5 @@
+#!/bin/sh
+
+if [ "x$DISPLAY" = 'x' -a "x$TTY" = 'x/dev/tty1' ] ; then
+    exec startx "/etc/xmde/rc"
+fi

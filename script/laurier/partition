@@ -1,0 +1,217 @@
+#!/usr/bin/bash
+
+
+source 'script/common/temp'
+source 'script/common/ui'
+
+
+# find_partition_of_disk <disk> <part-num> <output-var>
+# Find the partition <part-num> of the specified <disk> and store the result in
+# the specified <output-var> variable.
+# Try do find the partition automatically but may ask user's help in last
+# resort.
+find_partition_of_disk()
+{
+    local disk="$1" ; shift
+    local pnum="$1" ; shift
+    local output="$1" ; shift
+    local part
+
+    # If the disk path ends with a number, add the 'p' character followed by
+    # the partition number. Otherwise, just append the partition number.
+    if echo "$disk" | grep -qP '\d$' ; then
+	part="${disk}p${pnum}"
+    else
+	part="${disk}${pnum}"
+    fi
+
+    # If the partition does not exist, then ask the user to fix the problem by
+    # dropping him into a shell.
+    if [ ! -e "$part" ] ; then
+	ask_help part \
+		 "Cannot find partition $pnum of disk '$disk'" \
+		 "Please call 'answer <partition-path>' to continue"
+    fi
+
+    # If even the user is unable to find the partition path, there is nothing
+    # we can do.
+    if [ ! -e "$part" ] ; then
+	error "Invalid partition path, aborting"
+    fi
+
+    # Put the partition path in the output variable.
+    eval "$output=\"$part\""
+}
+
+# prepare_partitions <disk-path> <password> <crypt> <boot> <swap> <root> <home>
+# Create the partition scheme for the computer Laurier on the specified disk.
+# The Laurier system is encrypted with the password provided as second
+# argument.
+# The path of the encrypted partition is stored in the variable specified by
+# the name <crypt>.
+# This function creates a boot, a swap, a root and a home partitions. The path
+# of each of these partitions is stored inside variables with the names
+# specified with the four last arguments.
+prepare_partitions()
+{
+    local disk="$1" ; shift
+    local passwd="$1" ; shift
+    local cryptvar="$1" ; shift
+    local bootvar="$1" ; shift
+    local swapvar="$1" ; shift
+    local rootvar="$1" ; shift
+    local homevar="$1" ; shift
+    local TYPE_EFI='C12A7328-F81F-11D2-BA4B-00A0C93EC93B'
+    local TYPE_LVM='E6D6D379-F507-44C2-A23C-238F2A3DF928'
+    local cryptpart bootpart
+
+    info "Create partition table on '$disk'"
+    {
+    	# This computer uses an UEFI, so we need to use a GPT partition table.
+    	printf 'label: gpt\n'
+
+    	# The first partition is the /boot partition where we put EFI programs
+    	# and grub files.
+    	printf 'size=256M, type=%s\n' "$TYPE_EFI"
+
+    	# The second partition is a LVM/Luks2 encrypted volume where we put all
+    	# the other partitions.
+    	printf 'type=%s\n' "$TYPE_LVM"
+    } | sfdisk -q "$disk"
+
+    info "Wait for kernel update ..."
+    sleep 1
+
+    # Assign the boot output variable to the name of the first partition.
+    find_partition_of_disk "$disk" '1' bootpart
+    info "Associate partition '$bootpart' with '/boot'"
+    eval "$bootvar='$bootpart'"
+
+    # Let the crpytpart by the name of the second partition.
+    find_partition_of_disk "$disk" '2' cryptpart
+    eval "$cryptvar='$cryptpart'"
+
+    # Now encrypt the second partition with the provided password.
+    info "Encrypt partition '$cryptpart' with luks2"
+    printf "%s" "$passwd" | cryptsetup luksFormat --type luks2 "$cryptpart" -
+
+    # Open the newly encrypted partition in a mapped disk 'lvm'
+    printf "%s" "$passwd" | cryptsetup open "$cryptpart" lvm --key-file -
+
+    # Create physical volume in encrypted partition
+    pvcreate '/dev/mapper/lvm' > /dev/null
+
+    # Create logical volume group "system" in this physical volume
+    vgcreate -q 'system' '/dev/mapper/lvm' > /dev/null
+
+    # Create logical partitions in the logical volume group.
+    # The partitions are accessible with /dev/system/NAME
+    lvcreate -L 16G 'system' -n 'swap' > /dev/null
+    lvcreate -L 64G 'system' -n 'root' > /dev/null
+    lvcreate -l 100%FREE 'system' -n 'home' > /dev/null
+
+    # Assign the swap, root and home output variables to their path.
+    info "Associate logical volume '/dev/system/swap' with the swap"
+    eval "$swapvar=\"/dev/system/swap\""
+
+    info "Associate logical volume '/dev/system/root' with '/'"
+    eval "$rootvar=\"/dev/system/root\""
+
+    info "Associate logical volume '/dev/system/home' with '/home'"
+    eval "$homevar=\"/dev/system/home\""
+}
+
+
+# format_partitions <boot> <swap> <root> <home>
+# Format and mount the partitions of the system.
+# Since Laurier is a UEFI system, we need a separated '/boot' partition
+# additionally to the '/', '/home' and swap partitions.
+format_partitions()
+{
+    local boot="$1" ; shift
+    local swap="$1" ; shift
+    local root="$1" ; shift
+    local home="$1" ; shift
+
+    # Be sure that every partitions are unmounted before to format them.
+    # Unmount hem in proper order.
+    for part in "$home" "$boot" "$root" ; do
+	umount "$part" 2> /dev/null || true
+    done
+
+    # Also unmount the swap partition.
+    swapoff "$swap" 2>/dev/null || true
+
+    # Format the partitions with the appropriate type.
+    info "Format all partitions"
+    yes | mkfs.fat -F32 "$boot" > /dev/null       # boot/EFI partition is FAT32
+    yes | mkswap "$swap" > /dev/null
+    yes | mkfs.ext4 -q "$root"  # We choose ext4 for '/' and '/home' partitions
+    yes | mkfs.ext4 -q "$home"  # instead of btrfs which is not well integrated
+
+    # Now we can mount the partitions in proper order, creating the mountpoints
+    # as we go.
+    info "Mount all partitions"
+    mount  "$root"   '/mnt'
+    mkdir            '/mnt/boot'
+    mount  "$boot"   '/mnt/boot'
+    mkdir            '/mnt/home'
+    mount  "$home"   '/mnt/home'
+    swapon "$swap"
+}
+
+# check_partitions
+# Check that the partitions are correctly created, formatted and mounted.
+# Return if everything is correct, otherwise, print an error message and exits.
+check_partitions()
+{
+    genfstab '/mnt' | grep '^[^#]' | while read part mountpoint type opts ; do
+	case "$mountpoint" in
+	    '/')
+		if [ "$part" != '/dev/mapper/system-root' ] ; then
+		    error "Root partition at invalid logical volume '$part'"
+		elif [ "$type" != 'ext4' ] ; then
+		    error "Root partition has invalid type '$type'"
+		fi
+		;;
+	    '/boot')
+		if ! file "$part" | grep -q 'block special' ; then
+		    error "Boot partition not a block device '$part'"
+		elif [ "$type" != 'vfat' ] ; then
+		    error "Boot partition has invalid type '$type'"
+		fi
+		;;
+	    '/home')
+		if [ "$part" != '/dev/mapper/system-home' ] ; then
+		    error "Home partition at invalid logical volume '$part'"
+		elif [ "$type" != 'ext4' ] ; then
+		    error "Home partition has invalid type '$type'"
+		fi
+		;;
+	    'none')
+		if [ "$part" != '/dev/mapper/system-swap' ] ; then
+		    error "Swap partition at invalid logical volume '$part'"
+		elif [ "$type" != 'swap' ] ; then
+		    error "Swap partition has invalid type '$type'"
+		fi
+		;;
+	    *)
+		error "Unexpected partition mounted '$part' on '$mountpoint'"
+		;;
+	esac
+    done
+
+    if [ $(genfstab '/mnt' | grep '^[^#]' | wc -l) -ne 4 ] ; then
+	if ! genfstab '/mnt' | grep '^[^#]' | grep -qP '\s/\s' ; then
+	    error "Missing root partition"
+	elif ! genfstab '/mnt' | grep '^[^#]' | grep -qP '\s/boot\s' ; then
+	    error "Missing boot partition"
+	elif ! genfstab '/mnt' | grep '^[^#]' | grep -qP '\s/home\s' ; then
+	    error "Missing home partition"
+	elif ! genfstab '/mnt' | grep '^[^#]' | grep -qP '\snone\s' ; then
+	    error "Missing swap partition"
+	else
+	    error "Missing partition but cannot find which one"
+	fi
+    fi
+}

@@ -1,0 +1,27 @@
+#!/usr/bin/bash
+
+set -e
+
+dir="$1" ; shift
+dst="$1" ; shift
+
+if [ "x$dir" = 'x' ] ; then
+    exit 1
+fi
+if [ "x$dst" = 'x' ] ; then
+    exit 1
+fi
+
+(
+    cd "$dir"
+    rm -rf out work || true
+    mkdir out
+    ./build.sh -v
+)
+
+mv "$dir/out/"*.iso "$dst"
+
+(
+    cd "$dir"
+    rm -rf out work
+)

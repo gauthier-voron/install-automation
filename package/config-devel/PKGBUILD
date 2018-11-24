@@ -1,0 +1,33 @@
+# Maintainer: Gauthier Voron <gauthier.voron@mnesic.fr>
+pkgname='config-devel'
+pkgver=1.0
+pkgrel=1
+pkgdesc="Configuration for developping environment"
+arch=('any')
+url=""
+license=('GPL')
+groups=('config-laurier')
+depends=('apache-ant' 'arch-install-scripts' 'archiso' 'autoconf' 'automake' 'binutils' 'bison' 'bochs' 'clisp' 'cmake' 'cpio' 'ctags' 'dosfstools' 'emacs-go-mode' 'emacs-haskell-mode' 'emacs-lua-mode' 'emacs-nox' 'fakeroot' 'ffmpeg' 'file' 'findutils' 'flex' 'gawk' 'gcc' 'gcc' 'gcc-ada' 'gcc-fortran' 'gdb' 'gettext' 'ghc' 'git' 'gnuplot' 'go' 'gprolog' 'grep' 'groff' 'gtest' 'gzip' 'hexedit' 'jdk8-openjdk' 'jdk10-openjdk' 'jdk11-openjdk' 'libtool' 'ltrace' 'm4' 'make' 'moreutils' 'mtools' 'ocaml' 'ocaml-compiler-libs' 'ocaml-findlib' 'qemu' 'pacman' 'patch' 'perf' 'pkgconf' 'python' 'python2' 'sed' 'strace' 'subversion' 'syslinux' 'texinfo' 'texlive-core' 'texlive-genericextra' 'texlive-latexextra' 'time' 'util-linux' 'valgrind' 'which')
+makedepends=()
+checkdepends=()
+optdepends=()
+provides=()
+conflicts=()
+replaces=()
+backup=()
+options=()
+install=
+changelog=
+source=('emacs-config.el')
+noextract=()
+md5sums=('SKIP')
+validpgpkeys=()
+
+# prepare() {
+# }
+
+package() {
+    install -o 0 -g 0 -m755 -d "$pkgdir/usr/share/emacs/site-lisp"
+    install -o 0 -g 0 -m644 "$srcdir/emacs-config.el" \
+	    "$pkgdir/usr/share/emacs/site-lisp/site-start.el"
+}
