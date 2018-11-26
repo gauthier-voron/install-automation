@@ -10,7 +10,7 @@ set -e
 
 dmenu -m  "${MENU_SCREEN:-0}"                                \
       -p  "${MENU_PROMPT:->}"                                \
-      -fn "${MENU-FONT:-xft:Liberation Mono:pixelsize=14}"   \
+      -fn "${MENU-FONT:-xft:Liberation Mono:pixelsize=16}"   \
       -f                                                     \
       -nb "${MENU_NORMAL_BG:-#101010}"                       \
       -nf "${MENU_NORMAL_FG:-#888888}"                       \
