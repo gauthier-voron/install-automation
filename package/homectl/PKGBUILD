@@ -27,7 +27,7 @@ package() {
     install -d -m755 "$pkgdir/etc/skel"
 
     for dir in 'archive' 'download' 'model' 'project' \
-	       'resource' 'task' 'volatie'
+	       'resource' 'task' 'volatile'
     do
 	install -d -m755 "$pkgdir/etc/skel/$dir"
     done
