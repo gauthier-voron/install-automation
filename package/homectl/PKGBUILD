@@ -18,16 +18,16 @@ backup=()
 options=()
 install=
 changelog=
-source=()
+source=('user-dirs.dirs')
 noextract=()
-md5sums=()
+md5sums=('SKIP')
 validpgpkeys=()
 
 package() {
     install -d -m755 "$pkgdir/etc/skel"
 
     for dir in 'archive' 'download' 'model' 'project' \
-	       'resource' 'task' 'volatie'
+	       'resource' 'task' 'volatile'
     do
 	install -d -m755 "$pkgdir/etc/skel/$dir"
     done
@@ -35,4 +35,8 @@ package() {
     for res in 'music' 'picture' 'video' ; do
 	install -d -m755 "$pkgdir/etc/skel/resource/$res"
     done
+
+    install -d -m755 "$pkgdir/etc/skel/.config"
+    install -m644 "$srcdir/user-dirs.dirs" \
+	    "$pkgdir/etc/skel/.config/user-dirs.dirs"
 }
