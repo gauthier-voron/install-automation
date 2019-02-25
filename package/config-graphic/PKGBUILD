@@ -19,13 +19,11 @@ options=()
 install=
 changelog=
 source=('archlinux-wallpaper-1366x768.png' 'archlinux-wallpaper-1920x1080.png'
-	'archlinux-wallpaper-1920x1200.png' 'xmde-wallpaper' 'zprofile')
+	'archlinux-wallpaper-1920x1200.png' 'no-touchscreen.conf'
+	'xmde-wallpaper' 'zprofile')
 noextract=()
-md5sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+md5sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 validpgpkeys=()
-
-# prepare() {
-# }
 
 package() {
     install -d -m755 "$pkgdir/etc/skel"
@@ -42,4 +40,8 @@ package() {
     install -o 0 -g 0 -d -m755 "$pkgdir/etc/xmde/xinitrc.d"
     install -m755 "$srcdir/xmde-wallpaper" \
 	    "$pkgdir/etc/xmde/xinitrc.d/90-wallpaper.sh"
+
+    install -o 0 -g 0 -d -m755 "$pkgdir/etc/X11/xorg.conf.d"
+    install -m644 "$srcdir/no-touchscreen.conf" \
+	    "$pkgdir/etc/X11/xorg.conf.d/90-no-touchscreen.conf"
 }

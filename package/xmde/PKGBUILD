@@ -19,9 +19,9 @@ backup=()
 options=()
 install=
 changelog=
-source=('icons.tar.gz' 'lockscreen.txt' 'rc' 'suspend@.service' 'xmenu.conf' 'xmde-appmenu' 'xmde-docmenu' 'xmde-highlight' 'xmde-lock' 'xmde-menu' 'xmde-restart' 'xmde-screen' 'xmde-screenmenu' 'xmde-start' 'xmde-statusbar' 'xmde-volume' 'xmde-wallpaper' 'xmde-xmobar' 'xmobar.conf' 'xmonad.hs' 'Xresources')
+source=('cursor-name.sh' 'icons.tar.gz' 'lockscreen.txt' 'rc' 'suspend@.service' 'xmenu.conf' 'xmde-appmenu' 'xmde-docmenu' 'xmde-highlight' 'xmde-lock' 'xmde-menu' 'xmde-restart' 'xmde-screen' 'xmde-screenmenu' 'xmde-start' 'xmde-statusbar' 'xmde-volume' 'xmde-wallpaper' 'xmde-xmobar' 'xmobar.conf' 'xmonad.hs' 'Xresources')
 noextract=()
-md5sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+md5sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 validpgpkeys=()
 
 # prepare() {
@@ -40,6 +40,10 @@ package() {
     do
 	install -m644 "$srcdir/$file" "$pkgdir/etc/xmde/$file"
     done
+
+    install -o 0 -g 0 -d -m755 "$pkgdir/etc/xmde/xinitrc.d"
+    install -m644 "$srcdir/cursor-name.sh" \
+	    "$pkgdir/etc/xmde/xinitrc.d/90-cursor-name.sh"
 
     install -d -m755 "$pkgdir/usr/bin"
     for file in 'xmde-appmenu' 'xmde-docmenu' 'xmde-highlight' 'xmde-lock' \
