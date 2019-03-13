@@ -1,0 +1,49 @@
+#!/usr/bin/bash
+
+if [ "x$SOURCED_COMMON_NETWORK" = 'x' ] ; then
+SOURCE_COMMON_NETWORK=1
+
+
+source 'install-scripts/common/ui'
+
+
+# wait_network <seconds>
+# Wait for a network connection to be available for <seconds>. If not network
+# connection can be found in this delay, then ask for user help. If the user
+# cannot setup a network connection, then return false.
+wait_network() {
+    seconds="$1" ; shift
+
+    # Try to wait for a defined amount of time to get a network ip with
+    # global scope (not localhost)
+    for i in `seq 1 $seconds` ; do
+	if ! ip addr | grep -q 'scope global' ; then
+	    # If we don't have one, then wait and retry
+	    sleep 1
+	    continue
+	fi
+
+	# If we have an ip, check if we can join some well known service
+	if ! curl 'www.google.com' > /dev/null 2> /dev/null ; then
+	    # If we can't, then wait and retry
+	    sleep 1
+	    continue
+	fi
+
+	# If we can, then return success
+	return 0
+    done
+
+    # If no ip address, then ask for help to user
+    ask_help none "Cannot find network address" \
+	     "Please configure the network, then exit this shell"
+
+    # If when the user gives back control, we still cannot find network, then
+    # return false
+    if ! curl 'www.google.com' > /dev/null 2> /dev/null ; then
+	error "Cannot find network address"
+    fi
+}
+
+
+fi
