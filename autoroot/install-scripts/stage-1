@@ -1,0 +1,45 @@
+#!/usr/bin/bash
+
+
+set -e
+
+
+source 'install-scripts/common/ui'
+
+
+LAURIER_MAC='9c:b6:d0:8e:8a:75'
+ORME_MAC='84:a6:c8:da:f4:9e'
+QEMU_MAC='52:54:00:12:34:56'
+
+
+get_mac_identity() {
+    local mac="`ip link | tail -n 1`"
+    echo $mac| perl -wpl -e 's/^[^:]*([0-9a-f]{2}(?::[0-9a-f]{2}){5}).*$/$1/'
+}
+
+
+mac=`get_mac_identity`
+if [ "x$mac" = 'x' ] ; then
+    machine=
+elif [ "x$mac" = "x$LAURIER_MAC" ] ; then
+    machine='laurier'
+elif [ "x$mac" = "x$ORME_MAC" ] ; then
+    machine='orme'
+elif [ "x$mac" = "x$QEMU_MAC" ] ; then
+    machine='qemu'
+fi
+
+if [ "x$machine" = 'x' ] ; then
+    ask_help machine \
+	     "Cannot say what is the machine (mac address: '$mac')" \
+	     "Please call 'answer <machine-name>' in lowercase to continue"
+fi
+
+script="install-scripts/$machine/stage-1"
+
+if [ ! -e "$script" ] ; then
+    error "Cannot find the installation script for machine '$machine'" \
+	  "Should be at '$script' but file does not exist"
+fi
+
+"./$script"

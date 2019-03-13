@@ -1,0 +1,96 @@
+#!/usr/bin/bash
+
+
+source 'install-scripts/common/chroot'
+source 'install-scripts/common/pacman'
+source 'install-scripts/common/temp'
+source 'install-scripts/common/ui'
+
+
+pacstrap_base_system() {
+    info 'Install base packages'
+    pacstrap '/mnt' 'base' 'grub'
+
+    info 'Bind base packages'
+    bind_system_packages
+}
+
+setup_system_boot() {
+    local disk="$1" ; shift
+
+    info "Generate '/etc/fstab'"
+    genfstab -U '/mnt' >> '/mnt/etc/fstab'
+
+    info "Set custom timeout for GRUB"
+    sed -ri 's/GRUB_TIMEOUT=.*/GRUB_TIMEOUT=2/' '/mnt/etc/default/grub'
+
+    info "Install grub on boot disk '$disk'"
+    add_chroot_commands "grub-install --target=i386-pc '$disk'"
+    add_chroot_commands "grub-mkconfig -o /boot/grub/grub.cfg"
+
+    info 'Execute chrooted update'
+    execute_chroot_command
+}
+
+setup_system_network() {
+    find '/etc/netctl' -maxdepth 1 -type f | while read path ; do
+	info "Install netctl profile '${path##*/}'"
+	cp "$path" "/mnt$path"
+    done
+
+    ip addr show scope global | sed -nr 's/^[[:digit:]]+: (e[^:]*):.*$/\1/p' \
+	| while read if ; do
+	(
+	    printf "Description='Ethernet on %s / no security'\n" "$if"
+	    printf 'Connection=ethernet\n'
+	    printf 'Interface=%s\n' "$if"
+	    printf 'IP=dhcp\n'
+	) > "/mnt/etc/netctl/ethernet-$if"
+    done
+
+    if [ `ls "/mnt/etc/netctl/ethernet-"* 2> /dev/null | wc -l` -eq 1 ] ; then
+	mv "/mnt/etc/netctl/ethernet-"* "/mnt/etc/netctl/ethernet"
+	add_chroot_commands "netctl enable 'ethernet'"
+    fi
+
+    for profile in `netctl list | sed -nr 's/^\* (.*)$/\1/p'` ; do
+	info "Enable netctl profile '$profile'"
+	add_chroot_commands "netctl enable '$profile'"
+    done
+
+    execute_chroot_command
+}
+
+setup_system_autoinstall() {
+    info 'Copy install scripts'
+    cp -R '/root/install-scripts' '/mnt/root/install-scripts'
+
+    info 'Configure install autologin'
+    sed -r 's!^ExecStart=.*!ExecStart=-/sbin/agetty --noclear -a root %I 38400 linux!' \
+	'/mnt/usr/lib/systemd/system/getty@.service' \
+	> '/mnt/usr/lib/systemd/system/install-autologin@.service'
+
+    add_chroot_commands "systemctl disable getty@tty1"
+    add_chroot_commands "systemctl enable install-autologin@tty1"
+    execute_chroot_command
+
+    info 'Configure install autolaunch'
+    {
+	printf '#!/usr/bin/bash\n'
+	echo
+	printf "./install-scripts/qemu/stage-2\n"
+    } > '/mnt/root/.profile'
+}
+
+remove_system_autoinstall() {
+    info 'Deconfigure autologin'
+    systemctl disable install-autologin@tty1
+    systemctl enable getty@tty1
+
+    info 'Deconfigure install autolaunch'
+    rm '.profile'
+    rm '/usr/lib/systemd/system/install-autologin@.service'
+
+    info 'Delete install scripts'
+    rm -rf '/root/install-scripts'
+}

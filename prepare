@@ -1,0 +1,109 @@
+#!/bin/bash
+#
+#   prepare - create an automated install archiso file tree
+#
+#   Copy a standard archiso file tree locally and customize it by adding the
+#   automated installation scripts.
+#   Optionally, build the resulting ISO image.
+#
+
+set -e
+
+SOURCE='/usr/share/archiso/configs/releng'
+DIROOT='root'
+ISODST=
+TARGET=
+ISONLY=0
+CHUSER=
+
+packages=('binutils' 'fakeroot')
+
+while [ $# -gt 0 ] ; do
+    case "$1" in
+	'-b') shift ; ISODST="$1" ;;
+	'-d') shift ; DIROOT="$1" ;;
+	'-i') ISONLY=1 ;;
+	'-s') shift ; SOURCE="$1" ;;
+	'-u') shift ; CHUSER="$1" ;;
+	'--') shift ; break ;;
+	'-'*) echo "unknown option '$1'" >&2 ; exit 1 ;;
+	*)    break ;;
+    esac
+    shift
+done
+
+if [ $ISONLY -eq 0 ] ; then
+    if [ ! -d "$SOURCE" -o ! -f "$SOURCE/build.sh" ] ; then
+	echo "invalid source archiso directory '$SOURCE'" >&2
+	exit 1
+    fi
+
+    if [ ! -d "$DIROOT" ] ; then
+	echo "invalid root directory '$DIROOT'" >&2
+	exit 1
+    fi
+elif [ "x$ISODST" = 'x' ] ; then
+    echo "mandatory -b option when -i specified" >&2
+    exit 1
+fi
+
+if [ "x$CHUSER" != 'x' ] ; then
+    if [ "x$ISODST" = 'x' ] ; then
+	echo "mandatory -b option when -u specified" >&2
+	exit 1
+    elif [ "x$(whoami)" != 'xroot' ] ; then
+	echo "option -u needs root privileges" >&2
+	exit 1
+    fi
+fi    
+
+if [ "x$ISODST" != 'x' -a -e "$ISODST" -a ! -f "$ISODST" ] ; then
+    echo "invalid iso destination '$ISODST'" >&2
+    exit 1
+fi
+
+if [ $# -lt 1 ] ; then
+    echo "missing target operand" >&2
+    exit 1
+elif [ $# -gt 1 ] ; then
+    echo "unexpected operand '$2'" >&2
+    exit 1
+fi
+
+TARGET="$1"
+
+if [ $ISONLY -eq 0 ] ; then
+    if [ -e "$TARGET" ] ; then
+	if [ ! -d "$TARGET" -o ! -f "$TARGET/build.sh" ] ; then
+	    echo "invalid target operand '$TARGET' : file already exists" >&2
+	    exit 1
+	fi
+
+	rm -rf "$TARGET"
+    fi
+
+    cp --recursive "$SOURCE" "$TARGET"
+    cp --recursive --no-target-directory "$DIROOT" "$TARGET/airootfs/root"
+
+    for package in "${packages[@]}" ; do
+	if ! grep -q "$package" < "$TARGET/packages.x86_64" ; then
+	    echo "$package" >> "$TARGET/packages.x86_64"
+	fi
+    done
+elif [ ! -f "$TARGET/build.sh" ] ; then
+    echo "invalid target operand '$TARGET' : not a file" >&2
+    exit 1
+fi
+
+if [ "x$ISODST" != 'x' ] ; then
+    if [ "x$(whoami)" != 'xroot' ] ; then
+	sudo "$0" -i -b "$ISODST" -u "$(id --user):$(id --group)" "$TARGET"
+    else
+	"$TARGET/build.sh"
+	mv 'out/'*'.iso' "$ISODST"
+	rm -rf 'out' 'work'
+	if [ "x$CHUSER" != 'x' ] ; then
+	    chown "$CHUSER" "$ISODST"
+	fi
+    fi
+fi

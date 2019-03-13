@@ -1,0 +1,143 @@
+#!/usr/bin/bash
+
+if [ "x$SOURCED_COMMON_UI" = 'x' ] ; then
+SOURCED_COMMON_UI=1
+
+
+source 'install-scripts/common/temp'
+
+
+USE_COLOR=1
+
+
+# ask_help <variable> <message...>
+# Print some specified message to the user, then drop him on a shell. The user
+# then has to invoke 'answer <value>' and exit the shell. If the user exits
+# the shell before to calling 'answer', then the variable is set to the empty
+# string.
+ask_help() {
+    local variable="$1" ; shift
+    local header="$1" ; shift
+    local bindir answerfile
+
+    # Create a directory to contain the script 'answer' and a file to contain
+    # the user provided answer.
+    bindir=`mktemp -d -t --suffix='.path.d' XXXXXXXXXX`
+    answerfile=`mktemp -t --suffix='.answer' XXXXXXXXXX`
+
+    # Write the 'answer' script and give it execution rights.
+    {
+	printf '#!/usr/bin/bash\n'
+	echo
+	printf 'for val in "$@" ; do\n'
+	printf '    echo "$val" >> "%s"\n' "$answerfile"
+	printf 'done\n'
+	echo
+	printf 'echo "  answer saved, you can exit now"\n'
+    } > "$bindir/answer"
+    chmod 755 "$bindir/answer"
+
+    # Now print the message asking the user to do something.
+    if [ $USE_COLOR -eq 1 ] ; then
+	printf '\033[33;1m==>\033[0m \033[1m%s\033[0m\n' "$header"
+    else
+	printf '==> %s\n' "$header"
+    fi
+
+    for msg in "$@" ; do
+	printf '    %s\n' "$msg"
+    done
+
+    # Invoke zsh with the 'answer' script in the PATH so the user can invoke
+    # it from the inner shell.
+    (
+	export PATH="$bindir:$PATH"
+	zsh
+    )
+
+    # Finally, read the answer file to set the specified result variable and
+    # delete the temporary directory / file.
+    eval "$variable=$(cat "$answerfile")"
+    rm -rf "$bindir" "$answerfile"
+}
+
+ask_password() {
+    local variable="$1" ; shift
+    local header="$1" ; shift
+    local pass conf
+
+    # Print the message explaining the user what the password is used to
+    if [ $USE_COLOR -eq 1 ] ; then
+	printf '\033[32;1m==>\033[0m \033[1m%s\033[0m\n' "$header"
+    else
+	printf '==> %s\n' "$header"
+    fi
+
+    for msg in "$@" ; do
+	printf '    %s\n' "$msg"
+    done
+
+    # Ask for the password, then turn off echo and read
+    printf 'Password: '
+    stty -echo
+    read pass
+    stty echo
+    echo
+
+    # Ask for the password confirmation, then turn off echo and read
+    printf 'Confirm: '
+    stty -echo
+    read conf
+    stty echo
+    echo
+
+    # Then check if the two passwords are equals
+    # If not, then return false
+    if [ "x$pass" != "x$conf" ] ; then
+	error "Password and Confirm are different"
+    fi
+
+    # If the password is valid, assign the variable and exit with true
+    eval "$variable='$pass'"
+}
+
+error() {
+    local message="$1" ; shift
+
+    if [ $USE_COLOR -eq 1 ] ; then
+	printf '\033[31;1m==> ERROR:\033[0m \033[1m%s\033[0m\n' "$message"
+    else
+	printf '==> ERROR: %s\n' "$message"
+    fi
+
+    exit 1
+}
+
+# msg <text>
+# Print some specified text to the user. This text should be an important
+# information, such as what is the current state of the installation.
+msg() {
+    local message="$1" ; shift
+
+    if [ $USE_COLOR -eq 1 ] ; then
+	printf '\033[32;1m==>\033[0m %s\n' "$message"
+    else
+	printf '==> %s\n' "$message"
+    fi
+}
+
+# info <text>
+# Print some specified text to the user. This text should be a useful
+# information, such as what is the current action at a coarse grain.
+info() {
+    local message="$1" ; shift
+
+    if [ $USE_COLOR -eq 1 ] ; then
+	printf '\033[34;1m  ->\033[0m %s\n' "$message"
+    else
+	printf '  -> %s\n' "$message"
+    fi
+}
+
+
+fi
