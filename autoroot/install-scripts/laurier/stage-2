@@ -6,7 +6,7 @@ set -e
 
 source 'install-scripts/common/network'
 source 'install-scripts/common/ui'
-source 'install-scripts/qemu/basesys'
+source 'install-scripts/laurier/basesys'
 
 
 add_package_repo() {
