@@ -1,0 +1,42 @@
+#!/usr/bin/bash
+
+
+set -e
+
+
+source 'install-scripts/common/ui'
+source 'install-scripts/orme/partition'
+source 'install-scripts/orme/basesys'
+
+
+msg "Set keyboard layout"
+loadkeys 'fr'
+
+disk='/dev/sda'
+ask_password passwd "Enter system password"
+
+ask_help none "Configure network"
+
+msg "Prepare partitions"
+prepare_partitions "$disk" "$passwd" crypt boot swap root home
+
+msg "Format partitions"
+format_partitions "$boot" "$swap" "$root" "$home"
+
+msg "Check partitions"
+check_partitions
+
+msg "Pacstrap base system"
+pacstrap_base_system
+
+msg "Setup system boot"
+setup_system_boot "$disk" "$crypt"
+
+msg "Setup system network"
+setup_system_network
+
+msg "Setup system auto-install"
+setup_system_autoinstall "$passwd"
+
+
+reboot
