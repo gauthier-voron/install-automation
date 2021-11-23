@@ -7,6 +7,7 @@ set -e
 source 'install-scripts/common/ui'
 
 
+BOULEAU_MAC='c0:3f:d5:63:38:be'
 LAURIER_MAC='9c:b6:d0:8e:8a:75'
 ORME_MAC='84:a6:c8:da:f4:9e'
 QEMU_MAC='52:54:00:12:34:56'
@@ -21,6 +22,8 @@ get_mac_identity() {
 mac=`get_mac_identity`
 if [ "x$mac" = 'x' ] ; then
     machine=
+elif [ "x$mac" = "x$BOULEAU_MAC" ] ; then
+    machine='bouleau'
 elif [ "x$mac" = "x$LAURIER_MAC" ] ; then
     machine='laurier'
 elif [ "x$mac" = "x$ORME_MAC" ] ; then
