@@ -8,7 +8,7 @@ source 'install-scripts/common/ui'
 
 
 BOULEAU_MAC='c0:3f:d5:63:38:be'
-LAURIER_MAC='9c:b6:d0:8e:8a:75'
+LAURIER_MAC='dc:41:a9:9f:fe:39'
 ORME_MAC='84:a6:c8:da:f4:9e'
 QEMU_MAC='52:54:00:12:34:56'
 
