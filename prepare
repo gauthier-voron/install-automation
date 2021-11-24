@@ -95,8 +95,14 @@ if [ $ISONLY -eq 0 ] ; then
     mv "$TARGET/profiledef.new.sh" "$TARGET/profiledef.sh"
 
     for package in "${packages[@]}" ; do
-	if ! grep -q "$package" < "$TARGET/packages.x86_64" ; then
-	    echo "$package" >> "$TARGET/packages.x86_64"
+	if [ "${package:0:1}" = '!' ] ; then
+	    grep -v "${package:1}" < "$TARGET/packages.x86_64" \
+		 > "$TARGET/packages.x86_64.new"
+	    mv "$TARGET/packages.x86_64.new" "$TARGET/packages.x86_64"
+	else
+	    if ! grep -q "$package" < "$TARGET/packages.x86_64" ; then
+		echo "$package" >> "$TARGET/packages.x86_64"
+	    fi
 	fi
     done
 elif [ ! -f "$TARGET/profiledef.sh" ] ; then
