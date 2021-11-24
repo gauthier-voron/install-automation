@@ -33,7 +33,7 @@ while [ $# -gt 0 ] ; do
 done
 
 if [ $ISONLY -eq 0 ] ; then
-    if [ ! -d "$SOURCE" -o ! -f "$SOURCE/build.sh" ] ; then
+    if [ ! -d "$SOURCE" -o ! -f "$SOURCE/profiledef.sh" ] ; then
 	echo "invalid source archiso directory '$SOURCE'" >&2
 	exit 1
     fi
@@ -74,7 +74,7 @@ TARGET="$1"
 
 if [ $ISONLY -eq 0 ] ; then
     if [ -e "$TARGET" ] ; then
-	if [ ! -d "$TARGET" -o ! -f "$TARGET/build.sh" ] ; then
+	if [ ! -d "$TARGET" -o ! -f "$TARGET/profiledef.sh" ] ; then
 	    echo "invalid target operand '$TARGET' : file already exists" >&2
 	    exit 1
 	fi
@@ -90,7 +90,7 @@ if [ $ISONLY -eq 0 ] ; then
 	    echo "$package" >> "$TARGET/packages.x86_64"
 	fi
     done
-elif [ ! -f "$TARGET/build.sh" ] ; then
+elif [ ! -f "$TARGET/profiledef.sh" ] ; then
     echo "invalid target operand '$TARGET' : not a file" >&2
     exit 1
 fi
@@ -99,7 +99,7 @@ if [ "x$ISODST" != 'x' ] ; then
     if [ "x$(whoami)" != 'xroot' ] ; then
 	sudo "$0" -i -b "$ISODST" -u "$(id --user):$(id --group)" "$TARGET"
     else
-	"$TARGET/build.sh"
+	mkarchiso "$TARGET"
 	mv 'out/'*'.iso' "$ISODST"
 	rm -rf 'out' 'work'
 	if [ "x$CHUSER" != 'x' ] ; then
