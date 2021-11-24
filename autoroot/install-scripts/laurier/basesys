@@ -2,6 +2,7 @@
 
 
 source 'install-scripts/common/chroot'
+source 'install-scripts/common/network'
 source 'install-scripts/common/pacman'
 source 'install-scripts/common/temp'
 source 'install-scripts/common/ui'
@@ -64,17 +65,8 @@ setup_system_boot() {
 }
 
 setup_system_network() {
-    find '/etc/netctl' -maxdepth 1 -type f | while read path ; do
-	info "Install netctl profile '${path##*/}'"
-	cp "$path" "/mnt$path"
-    done
-
-    for profile in `netctl list | sed -nr 's/^\* (.*)$/\1/p'` ; do
-	info "Enable netctl profile '$profile'"
-	add_chroot_commands "netctl enable '$profile'"
-    done
-
-    execute_chroot_command
+    info "Setup netctl"
+    setup_netctl
 }
 
 setup_system_autoinstall() {

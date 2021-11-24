@@ -22,14 +22,14 @@ $(OBJ)stage-1.img: $(OBJ)devinstaller.iso $(OBJ)devscripts.iso | $(OBJ)
 	$(call cmd-print,  MKDISK  $@)
 	$(Q)truncate -s 8G $@
 	$(call cmd-print,  QEMU    $(OBJ)devinstaller.iso + $@ + $(OBJ)devscripts.iso)
-	$(Q)qemu-system-x86_64 -m 4G -smp 4 -enable-kvm          \
-          -drive file=$(OBJ)devinstaller.iso,media=cdrom         \
-          -drive file=$@,if=virtio,media=disk,format=raw         \
+	$(Q)qemu-system-x86_64 -m 4G -smp 4 -enable-kvm               \
+          -drive file=$(OBJ)devinstaller.iso,media=cdrom,format=raw   \
+          -drive file=$@,if=virtio,media=disk,format=raw              \
           -drive file=$(OBJ)devscripts.iso,if=virtio,media=disk
 
 $(OBJ)stage-2.img: $(OBJ)stage-1.img | $(OBJ)
 	$(call cmd-print,  MKDELTA $@)
-	$(Q)qemu-img create -f qcow2 $@ -b $(notdir $<)
+	$(Q)qemu-img create -f qcow2 $@ -b $(notdir $<) -F raw
 	$(call cmd-print,  QEMU    $@)
 	$(Q)qemu-system-x86_64 -m 4G -smp 4 -enable-kvm  \
           -drive file=$@,if=virtio,media=disk
@@ -64,6 +64,7 @@ $(OBJ)devscripts.iso: $(shell find autoroot -type f) | $(OBJ)
 	$(Q)xorriso -outdev $@ -blank as_needed -joliet on \
           $$(ls -1A autoroot | while read f ; do \
                  echo "-map autoroot/$$f /$$f" ; done)
+
 
 $(OBJ) $(ISO):
 	$(call cmd-mkdir, $@)

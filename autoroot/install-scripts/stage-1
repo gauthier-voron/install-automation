@@ -14,7 +14,7 @@ QEMU_MAC='52:54:00:12:34:56'
 
 
 get_mac_identity() {
-    local mac="`ip link | tail -n 1`"
+    local mac="`ip link | grep '..:..:..:..:..:..' | tail -n 1`"
     echo $mac| perl -wpl -e 's/^[^:]*([0-9a-f]{2}(?::[0-9a-f]{2}){5}).*$/$1/'
 }
 
