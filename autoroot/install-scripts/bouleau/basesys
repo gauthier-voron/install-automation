@@ -9,7 +9,8 @@ source 'install-scripts/common/ui'
 
 pacstrap_base_system() {
     info 'Install base packages'
-    pacstrap '/mnt' 'base' 'grub' 'intel-ucode'
+    pacstrap '/mnt' 'base' 'dhcpcd' 'grub' 'efibootmgr' 'intel-ucode' \
+	     'linux' 'linux-firmware' 'lvm2' 'netctl'
 
     info 'Bind base packages'
     bind_system_packages
