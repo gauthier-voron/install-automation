@@ -12,6 +12,14 @@ source 'install-scripts/qemu/basesys'
 disk='/dev/vda'
 msg "No system password for virtual machines"
 
+msg "Configure network"
+systemctl start dhcpcd.service
+
+msg "Check network availability"
+if ! wait_network 10 ; then
+    error "Cannot setup network connection"
+fi
+
 msg "Prepare partitions"
 prepare_partitions "$disk" swap root
 
