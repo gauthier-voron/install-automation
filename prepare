@@ -18,6 +18,9 @@ CHUSER=
 
 packages=('binutils' 'dialog' 'fakeroot' '!iwd' 'netctl' 'wpa_supplicant')
 
+airootfs=(
+    '!/etc/motd')
+
 while [ $# -gt 0 ] ; do
     case "$1" in
 	'-b') shift ; ISODST="$1" ;;
