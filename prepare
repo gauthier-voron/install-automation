@@ -85,6 +85,15 @@ if [ $ISONLY -eq 0 ] ; then
     cp --recursive "$SOURCE" "$TARGET"
     cp --recursive --no-target-directory "$DIROOT" "$TARGET/airootfs/root"
 
+    (
+	sed -r '/^file_permissions=\($/q' "$TARGET/profiledef.sh"
+	find "$DIROOT" -type f -perm 755 \
+	    | sed -re 's:'"$DIROOT"'(.*)$:  ["\/root\1"]="0\:0\:755":'
+	sed -nr '/^file_permissions=\($/,$ p' "$TARGET/profiledef.sh" \
+	    | tail -n +2
+    ) > "$TARGET/profiledef.new.sh"
+    mv "$TARGET/profiledef.new.sh" "$TARGET/profiledef.sh"
+
     for package in "${packages[@]}" ; do
 	if ! grep -q "$package" < "$TARGET/packages.x86_64" ; then
 	    echo "$package" >> "$TARGET/packages.x86_64"
