@@ -9,9 +9,6 @@ source 'install-scripts/laurier/partition'
 source 'install-scripts/laurier/basesys'
 
 
-msg "Set large font"
-setfont 'ter-132n'
-
 disk='/dev/nvme0n1'
 ask_password passwd "Enter system password"
 

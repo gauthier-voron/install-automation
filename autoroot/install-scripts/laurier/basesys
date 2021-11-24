@@ -60,7 +60,7 @@ setup_system_boot() {
     done
 
     info "Setup grub UEFI boot entry"
-    efibootmgr --create --disk "$disk" --part 1 -e 3 \
+    efibootmgr --create --disk "$disk" --part 1 \
 	       --loader '/EFI/grub/grubx64.efi' --label 'UEFI : System Disk'
 }
 
