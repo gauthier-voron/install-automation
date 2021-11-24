@@ -47,7 +47,7 @@ $(OBJ)stage-2.img: $(OBJ)stage-1.img | $(OBJ)
 #
 define INSTALLER-ISO-TEMPLATE
 
-  $(strip $(2))$(strip $(1))installer.iso: \
+  $(strip $(2))$(strip $(1))installer.iso: prepare \
                 $$(shell find $(strip $(1))root -type f) | $(strip $(2))
 	$$(call cmd-print,  PREPARE $$@)
 	$$(Q)./prepare -b $$@ -d $(strip $(1))root \
