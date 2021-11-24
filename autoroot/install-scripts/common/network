@@ -4,6 +4,7 @@ if [ "x$SOURCED_COMMON_NETWORK" = 'x' ] ; then
 SOURCE_COMMON_NETWORK=1
 
 
+source 'install-scripts/common/chroot'
 source 'install-scripts/common/ui'
 
 
@@ -43,6 +44,21 @@ wait_network() {
     if ! curl 'www.google.com' > /dev/null 2> /dev/null ; then
 	error "Cannot find network address"
     fi
+}
+
+
+setup_netctl() {
+    find '/etc/netctl' -maxdepth 1 -type f | while read path ; do
+	info "Install netctl profile '${path##*/}'"
+	cp "$path" "/mnt$path"
+    done
+
+    for profile in `netctl list | sed -nr 's/^\* (.*)$/\1/p'` ; do
+	info "Enable netctl profile '$profile'"
+	add_chroot_commands "netctl enable '$profile'"
+    done
+
+    execute_chroot_command
 }
 
 
