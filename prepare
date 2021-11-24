@@ -105,6 +105,29 @@ if [ $ISONLY -eq 0 ] ; then
 	    fi
 	fi
     done
+
+    for path in "${airootfs[@]}" ; do
+	if [ "${path:0:1}" = '!' ] ; then
+	    if [ -L "$TARGET/airootfs/${path:1}" ] ; then
+		rm "$TARGET/airootfs/${path:1}"
+	    elif [ -f "$TARGET/airootfs/${path:1}" ] ; then
+		rm "$TARGET/airootfs/${path:1}"
+	    fi
+	else
+	    action="${path#*:}"
+	    target="${action#*:}"
+	    action="${action%:*}"
+	    path="${path%%:*}"
+
+	    mkdir -p "$TARGET/airootfs/${path%/*}"
+
+	    if [ "${action}" = '->' ] ; then
+		ln -s "${target}" "$TARGET/airootfs/$path"
+	    elif [ "${action}" = '<<' ] ; then
+		printf "${target}" > "$TARGET/airootfs/$path"
+	    fi
+	fi
+    done
 elif [ ! -f "$TARGET/profiledef.sh" ] ; then
     echo "invalid target operand '$TARGET' : not a file" >&2
     exit 1
