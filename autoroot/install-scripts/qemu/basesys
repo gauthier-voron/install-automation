@@ -9,7 +9,7 @@ source 'install-scripts/common/ui'
 
 pacstrap_base_system() {
     info 'Install base packages'
-    pacstrap '/mnt' 'base' 'grub'
+    pacstrap '/mnt' 'base' 'dhcpcd' 'grub' 'linux' 'netctl'
 
     info 'Bind base packages'
     bind_system_packages
