@@ -19,7 +19,14 @@ CHUSER=
 packages=('binutils' 'dialog' 'fakeroot' '!iwd' 'netctl' 'wpa_supplicant')
 
 airootfs=(
-    '!/etc/motd')
+    '!/etc/motd'
+    '!/etc/systemd/system/multi-user.target.wants/iwd.service'
+    '!/etc/systemd/system/multi-user.target.wants/systemd-networkd.service'
+    '!/etc/systemd/system/multi-user.target.wants/systemd-resolved.service'
+    '!/etc/systemd/system/sockets.target.wants/systemd-networkd.socket'
+    '!/etc/systemd/system/network-online.target.wants/systemd-networkd-wait-online.service'
+    '!/etc/systemd/network/20-wireless.network'
+    '!/etc/systemd/network/20-ethernet.network')
 
 while [ $# -gt 0 ] ; do
     case "$1" in
